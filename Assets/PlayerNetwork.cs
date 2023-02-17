@@ -7,6 +7,7 @@ using System;
 
 public class PlayerNetwork : NetworkBehaviour
 {
+    private GameObject cam;
     private bool a = true;
     private List<GameObject> list = new List<GameObject>();
     private NetworkVariable<int> velocity = new NetworkVariable<int>(1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
@@ -24,6 +25,20 @@ public class PlayerNetwork : NetworkBehaviour
             this.gameObject.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.SetColor("_Color", newValue);
             UnityEngine.Debug.Log(OwnerClientId + " color " + newValue);
         };
+    }
+    void Awake()
+    {
+
+    }
+    void Start()
+    {
+        cam = new GameObject();
+         cam.AddComponent<Camera>();
+        cam.transform.SetParent(gameObject.transform);
+        gameObject.transform.position = new Vector3(0, 0, 0);
+        cam.transform.position = new Vector3(0, 0, 0);
+        //positionCameraClientRpc();
+
     }
 
 
@@ -78,4 +93,11 @@ public class PlayerNetwork : NetworkBehaviour
 
         bullet.transform.SetParent(this.gameObject.transform);
     }
+
+    [ClientRpc]
+    private void positionCameraClientRpc()
+    {
+        cam.transform.position = new Vector3(0,0,0); 
+    }
+
 }
