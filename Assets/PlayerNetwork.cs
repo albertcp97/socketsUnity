@@ -4,16 +4,18 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Diagnostics;
 using System;
+using Cinemachine;
 
 public class PlayerNetwork : NetworkBehaviour
 {
     private GameObject cam;
     private bool a = true;
     private List<GameObject> list = new List<GameObject>();
-    private NetworkVariable<int> velocity = new NetworkVariable<int>(1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<int> velocity = new NetworkVariable<int>(10, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     // Start is called before the first frame update
     private NetworkVariable<Color> color = new NetworkVariable<Color>(Color.blue, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     [SerializeField] public GameObject project;
+    [SerializeField] public Transform _camTransform;
     public override void OnNetworkSpawn()
     {
         velocity.OnValueChanged += (int previousValue, int newValue) =>
@@ -25,6 +27,17 @@ public class PlayerNetwork : NetworkBehaviour
             this.gameObject.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.SetColor("_Color", newValue);
             UnityEngine.Debug.Log(OwnerClientId + " color " + newValue);
         };
+        //https://www.youtube.com/watch?v=2rYjg5N4YZc&list=PLxmtWA2eKdQSf2EXE-tv0lmqmmdDzs0fV&index=12&ab_channel=CarlBoisvertDev
+        CinemachineVirtualCamera cvm = _camTransform.gameObject.GetComponent<CinemachineVirtualCamera>();
+
+        if (IsOwner)
+        {
+            cvm.Priority = 1;
+        }
+        else
+        {
+            cvm.Priority = 0;
+        }
     }
     void Awake()
     {
@@ -33,10 +46,11 @@ public class PlayerNetwork : NetworkBehaviour
     void Start()
     {
         cam = new GameObject();
-         cam.AddComponent<Camera>();
-        cam.transform.SetParent(gameObject.transform);
-        gameObject.transform.position = new Vector3(0, 0, 0);
-        cam.transform.position = new Vector3(0, 0, 0);
+        
+        // cam.AddComponent<Camera>();
+        //cam.transform.SetParent(gameObject.transform);
+        //gameObject.transform.position = new Vector3(0, 0, 0);
+        //cam.transform.position = new Vector3(0, 0, 0);
         //positionCameraClientRpc();
 
     }
@@ -52,9 +66,9 @@ public class PlayerNetwork : NetworkBehaviour
         Vector3 movement = Vector3.zero;
 
         if (Input.GetKey(KeyCode.W))
-            movement += Vector3.up;
+            movement += Vector3.forward;
         if (Input.GetKey(KeyCode.S))
-            movement -= Vector3.up;
+            movement += Vector3.back;
         if (Input.GetKey(KeyCode.A))
             movement -= Vector3.right;
         if (Input.GetKey(KeyCode.D))
