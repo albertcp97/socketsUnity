@@ -5,6 +5,7 @@ using Unity.Netcode;
 using System.Diagnostics;
 using System;
 using Cinemachine;
+using UnityEngine.SceneManagement;
 
 public class PlayerNetwork : NetworkBehaviour
 {
@@ -12,12 +13,29 @@ public class PlayerNetwork : NetworkBehaviour
     private bool a = true;
     private List<GameObject> list = new List<GameObject>();
     private NetworkVariable<int> velocity = new NetworkVariable<int>(10, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<int> turn = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // Start is called before the first frame update
     private NetworkVariable<Color> color = new NetworkVariable<Color>(Color.blue, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     [SerializeField] public GameObject project;
     [SerializeField] public Transform _camTransform;
+    [SerializeField] public string name;
+    [SerializeField] public ulong id;
+
+    public NetworkVariable<Dictionary<string, ulong>>  map= new NetworkVariable<Dictionary<string, ulong>>(new Dictionary<string, ulong>(), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     public override void OnNetworkSpawn()
     {
+        print("add client " + map.Value.Count);
+        if (IsOwner)
+        {
+            name = "Player" + (map.Value.Count + 1);
+            id = OwnerClientId;
+           
+        
+        }
+        if (IsServer) { 
+            map.Value.Add("Player" + (map.Value.Count + 1), OwnerClientId);
+        }
         velocity.OnValueChanged += (int previousValue, int newValue) =>
         {
             UnityEngine.Debug.Log(OwnerClientId + " a " + newValue);
@@ -29,10 +47,13 @@ public class PlayerNetwork : NetworkBehaviour
         };
         //https://www.youtube.com/watch?v=2rYjg5N4YZc&list=PLxmtWA2eKdQSf2EXE-tv0lmqmmdDzs0fV&index=12&ab_channel=CarlBoisvertDev
         CinemachineVirtualCamera cvm = _camTransform.gameObject.GetComponent<CinemachineVirtualCamera>();
-
+        
         if (IsOwner)
         {
-            cvm.Priority = 1;
+            if(!(SceneManager.GetActiveScene().name=="lobby"))
+                cvm.Priority = 1;
+            else
+                cvm.Priority = 0;
         }
         else
         {
@@ -41,6 +62,16 @@ public class PlayerNetwork : NetworkBehaviour
     }
     void Awake()
     {
+        List<GameObject> o = new List<GameObject>() ;
+        foreach (GameObject gameObj in GameObject.FindObjectsOfType(typeof(GameObject)))
+        {
+            if (gameObj.name.Contains("Player"))
+            {
+                //Do somet$$anonymous$$ng...
+                o.Add(gameObj);
+                print(gameObj);
+            }
+        }
 
     }
     void Start()
