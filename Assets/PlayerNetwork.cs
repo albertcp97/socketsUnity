@@ -6,12 +6,14 @@ using System.Diagnostics;
 using System;
 using Cinemachine;
 using UnityEngine.SceneManagement;
-
 public class PlayerNetwork : NetworkBehaviour
 {
     private GameObject cam;
     private bool a = true;
+    private bool b = true;
     private List<GameObject> list = new List<GameObject>();
+    
+    
     private NetworkVariable<int> velocity = new NetworkVariable<int>(10, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private NetworkVariable<int> turn = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // Start is called before the first frame update
@@ -21,20 +23,28 @@ public class PlayerNetwork : NetworkBehaviour
     [SerializeField] public string name;
     [SerializeField] public ulong id;
 
-    public NetworkVariable<Dictionary<string, ulong>>  map= new NetworkVariable<Dictionary<string, ulong>>(new Dictionary<string, ulong>(), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public Collider col = null;
+    public Dictionary<string, ulong>  map= new Dictionary<string, ulong>();
+    public List<ulong>  map2= new List<ulong>();
+    public List<GameObject>  map3= new List<GameObject>();
 
     public override void OnNetworkSpawn()
     {
-        print("add client " + map.Value.Count);
+        //print("add client " + map.Value.Count);
         if (IsOwner)
         {
-            name = "Player" + (map.Value.Count + 1);
+            name = "Player" ;
             id = OwnerClientId;
-           
-        
+            positionCameraClientRpc();
+
+
         }
-        if (IsServer) { 
-            map.Value.Add("Player" + (map.Value.Count + 1), OwnerClientId);
+        try
+        {
+            //map.Value.Add("Player" + (map.Value.Count + 1), OwnerClientId);
+        }catch(Exception e)
+        {
+            print("error " + e);
         }
         velocity.OnValueChanged += (int previousValue, int newValue) =>
         {
@@ -53,7 +63,7 @@ public class PlayerNetwork : NetworkBehaviour
             if(!(SceneManager.GetActiveScene().name=="lobby"))
                 cvm.Priority = 1;
             else
-                cvm.Priority = 0;
+                cvm.Priority = 1;
         }
         else
         {
@@ -86,14 +96,35 @@ public class PlayerNetwork : NetworkBehaviour
 
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "Palanca")
+        {
+            col = other;
+            b = true;
+        }
+    }
 
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.tag == "Palanca")
+        {
+            col = null;
+            b = false;
+        }
+    }
 
     // Update is called once per frame
     void Update()
     {
+        print("PlayerNetwork " + map2[turn.Value]);
+        //print("PlayerNetwork " + map[turn.Value]);
         //Aquest update només per a qui li pertany
-        if (!IsOwner) return;
 
+        
+        if (!IsOwner) return;
+        if (map2[turn.Value] != OwnerClientId)
+            return;
         Vector3 movement = Vector3.zero;
 
         if (Input.GetKey(KeyCode.W))
@@ -111,9 +142,14 @@ public class PlayerNetwork : NetworkBehaviour
         if (Input.GetKey(KeyCode.C))
             color.Value = Color.red;
 
+        if (Input.GetKey(KeyCode.F)&&b)
+        {
+                col.gameObject.GetComponent<pistonController>().changeColor();
+                changeTurnClientRpc();
+        }
 
         if (Input.GetKey(KeyCode.LeftShift)&&a)
-        {
+        {   
             ShootServerRpc();
             a=false;
         }
@@ -142,7 +178,32 @@ public class PlayerNetwork : NetworkBehaviour
     [ClientRpc]
     private void positionCameraClientRpc()
     {
-        cam.transform.position = new Vector3(0,0,0); 
+        map.Add(name, id);
+        map2.Add(id);
+        map3.Add(gameObject);
     }
+    [ClientRpc]
+    private void changeTurnClientRpc()
+    {
+            //holiServerRpc();
 
+        if (turn.Value == map.Count)
+            turn.Value=0;
+        else
+            turn.Value += 1;
+
+
+    }
+    [ServerRpc]
+    private void holiServerRpc()
+    {
+        //print("Vamo a matarlo"); changeTurn2ClientRpc();
+    }
+    [ClientRpc]
+    private void changeTurn2ClientRpc()
+    {
+        map3[turn.Value].SetActive(false);       
+
+
+    }
 }
