@@ -73,15 +73,15 @@ public class PlayerNetwork : NetworkBehaviour
     void Awake()
     {
         List<GameObject> o = new List<GameObject>() ;
-        foreach (GameObject gameObj in GameObject.FindObjectsOfType(typeof(GameObject)))
+       /* foreach (GameObject gameObj in GameObject.FindObjectsOfType(typeof(GameObject)))
         {
-            if (gameObj.name.Contains("Player"))
+           /* if (gameObj.name.Contains("Player"))
             {
                 //Do somet$$anonymous$$ng...
                 o.Add(gameObj);
                 print(gameObj);
             }
-        }
+        }*/
 
     }
     void Start()
@@ -117,14 +117,18 @@ public class PlayerNetwork : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        print("PlayerNetwork " + map2[turn.Value]);
-        //print("PlayerNetwork " + map[turn.Value]);
-        //Aquest update només per a qui li pertany
+    //print("PlayerNetwork " + map2[turn.Value]);
+    //print("PlayerNetwork " + map[turn.Value]);
+    //Aquest update només per a qui li pertany
+        print("HOLA");
+        if (Input.GetKey(KeyCode.F) && b)
+        {
 
-        
+            changeTurnServerRpc();
+        }
         if (!IsOwner) return;
-        if (map2[turn.Value] != OwnerClientId)
-            return;
+       /* if (map2[turn.Value] != OwnerClientId)
+            return;*/
         Vector3 movement = Vector3.zero;
 
         if (Input.GetKey(KeyCode.W))
@@ -142,11 +146,7 @@ public class PlayerNetwork : NetworkBehaviour
         if (Input.GetKey(KeyCode.C))
             color.Value = Color.red;
 
-        if (Input.GetKey(KeyCode.F)&&b)
-        {
-                col.gameObject.GetComponent<pistonController>().changeColor();
-                changeTurnClientRpc();
-        }
+        
 
         if (Input.GetKey(KeyCode.LeftShift)&&a)
         {   
@@ -178,31 +178,33 @@ public class PlayerNetwork : NetworkBehaviour
     [ClientRpc]
     private void positionCameraClientRpc()
     {
-        map.Add(name, id);
+       /* map.Add(name, id);
         map2.Add(id);
-        map3.Add(gameObject);
+        map3.Add(gameObject);*/
     }
-    [ClientRpc]
-    private void changeTurnClientRpc()
+    [ServerRpc]
+    private void changeTurnServerRpc()
     {
-            //holiServerRpc();
+        col.gameObject.GetComponent<pistonController>().changeColor();
+        holiServerRpc();
 
-        if (turn.Value == map.Count)
+       /* if (turn.Value == map.Count)
             turn.Value=0;
         else
-            turn.Value += 1;
+            turn.Value += 1;*/
 
 
     }
     [ServerRpc]
     private void holiServerRpc()
     {
-        //print("Vamo a matarlo"); changeTurn2ClientRpc();
+        print("Vamo a matarlo"); 
+        //map3[turn.Value].SetActive(false);
     }
     [ClientRpc]
     private void changeTurn2ClientRpc()
     {
-        map3[turn.Value].SetActive(false);       
+          
 
 
     }

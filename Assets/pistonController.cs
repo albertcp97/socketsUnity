@@ -6,7 +6,7 @@ using Unity.Netcode;
 public class pistonController : NetworkBehaviour
 {   
     private NetworkVariable<Color> color = new NetworkVariable<Color>(Color.yellow, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    private NetworkVariable<bool> activated = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> activated = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // Start is called before the first frame update
 
     public override void OnNetworkSpawn()
